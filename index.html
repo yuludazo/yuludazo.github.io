@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>プロフィール設定</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      padding: 30px;
+    }
+    .profile-container {
+      width: 480px;
+      margin: auto;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    }
+    .header-area {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background-color: #ccc;
+      overflow: hidden;
+    }
+    .header-area img,
+    .icon-area img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: top left;
+      user-select: none;
+    }
+    .icon-area {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid #fff;
+      background-color: #eee;
+      margin: -60px auto 20px;
+      z-index: 2;
+    }
+    .controls {
+      padding: 20px;
+    }
+    .control-group {
+      margin-bottom: 25px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    input[type="file"] {
+      display: block;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="profile-container">
+  <div class="header-area" id="header-container">
+    <img id="header-img" src="" alt="ヘッダー画像">
+  </div>
+  <div class="icon-area" id="icon-container">
+    <img id="icon-img" src="" alt="アイコン画像">
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>ヘッダー画像 (画像/GIF)</label>
+      <input type="file" id="header-upload" accept="image/*">
+      <label>拡大度</label>
+      <input type="range" id="header-zoom" min="1" max="3" step="0.1" value="1">
+      <label>X位置</label>
+      <input type="range" id="header-x" min="-500" max="500" step="1" value="0">
+      <label>Y位置</label>
+      <input type="range" id="header-y" min="-500" max="500" step="1" value="0">
+    </div>
+
+    <div class="control-group">
+      <label>アイコン画像 (画像/GIF)</label>
+      <input type="file" id="icon-upload" accept="image/*">
+      <label>拡大度</label>
+      <input type="range" id="icon-zoom" min="1" max="3" step="0.1" value="1">
+      <label>X位置</label>
+      <input type="range" id="icon-x" min="-200" max="200" step="1" value="0">
+      <label>Y位置</label>
+      <input type="range" id="icon-y" min="-200" max="200" step="1" value="0">
+    </div>
+  </div>
+</div>
+
+<script>
+  function scaleToFitWidth(img, container) {
+    const updatePosition = () => {
+      const containerWidth = container.clientWidth;
+      const scale = containerWidth / img.naturalWidth;
+      img.dataset.baseScale = scale;
+
+      img.style.width = `${img.naturalWidth}px`;
+      img.style.height = `${img.naturalHeight}px`;
+      img.style.transform = `scale(${scale})`;
+
+      const x = (container.clientWidth - img.naturalWidth * scale) / 2;
+      const y = (container.clientHeight - img.naturalHeight * scale) / 2;
+      img.dataset.baseX = x;
+      img.dataset.baseY = y;
+      img.style.left = `${x}px`;
+      img.style.top = `${y}px`;
+    };
+    img.onload = updatePosition;
+  }
+
+  function updateTransform(img, zoomSlider, xSlider, ySlider) {
+    const baseScale = parseFloat(img.dataset.baseScale || 1);
+    const scale = baseScale * parseFloat(zoomSlider.value);
+    const baseX = parseFloat(img.dataset.baseX || 0);
+    const baseY = parseFloat(img.dataset.baseY || 0);
+    const x = baseX + parseInt(xSlider.value);
+    const y = baseY + parseInt(ySlider.value);
+
+    img.style.transform = `scale(${scale})`;
+    img.style.left = `${x}px`;
+    img.style.top = `${y}px`;
+  }
+
+  const headerUpload = document.getElementById("header-upload");
+  const headerImg = document.getElementById("header-img");
+  const headerZoom = document.getElementById("header-zoom");
+  const headerX = document.getElementById("header-x");
+  const headerY = document.getElementById("header-y");
+
+  const iconUpload = document.getElementById("icon-upload");
+  const iconImg = document.getElementById("icon-img");
+  const iconZoom = document.getElementById("icon-zoom");
+  const iconX = document.getElementById("icon-x");
+  const iconY = document.getElementById("icon-y");
+
+  const headerContainer = document.getElementById("header-container");
+  const iconContainer = document.getElementById("icon-container");
+
+  headerUpload.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (file) {
+      headerImg.src = URL.createObjectURL(file);
+      headerZoom.value = 1;
+      headerX.value = 0;
+      headerY.value = 0;
+      setTimeout(() => scaleToFitWidth(headerImg, headerContainer), 10);
+    }
+  });
+
+  iconUpload.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (file) {
+      iconImg.src = URL.createObjectURL(file);
+      iconZoom.value = 1;
+      iconX.value = 0;
+      iconY.value = 0;
+      setTimeout(() => scaleToFitWidth(iconImg, iconContainer), 10);
+    }
+  });
+
+  function bindTransform(img, zoom, x, y) {
+    [zoom, x, y].forEach(input => {
+      input.addEventListener("input", () => {
+        updateTransform(img, zoom, x, y);
+      });
+    });
+  }
+
+  bindTransform(headerImg, headerZoom, headerX, headerY);
+  bindTransform(iconImg, iconZoom, iconX, iconY);
+</script>
+
+</body>
+</html>
